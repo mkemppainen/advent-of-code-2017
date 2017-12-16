@@ -28,7 +28,7 @@ defmodule Day7 do
   end
   
   def solve2 do
-# File.read!("day7-input.txt")
+    # File.read!("day7-input.txt")
     @input
     |> String.trim
     |> String.replace(",", "")
@@ -36,6 +36,7 @@ defmodule Day7 do
     |> Enum.map(&String.split/1)
     |> Enum.map(&parse/1)
     |> make_tree
+    |> find_unbalanced
     |> IO.inspect(limit: 20)
   end
 
@@ -51,15 +52,38 @@ defmodule Day7 do
     [_root, value | children] =
       list
       |> Enum.find(list, fn(x) -> hd(x) == root end)
-    
     {root, value, (for x <- children, do: make_tree(list, x))}
   end
 
-  # def make_tree(root, children) do
-  
-  # end
+  def find_unbalanced(tree = {_name, _weight, children}) do
+    case Enum.find(children, &is_unbalanced/1) do
+      nil -> tree
+      tree -> find_unbalanced(tree)
+    end
+  end
 
-  # return [parent, children...]
+  def is_unbalanced({_name, _weight, []}), do: false
+  def is_unbalanced({_name, _weight, children}) do
+    children
+    |> Enum.map(&tree_weight/1)
+    |> all_same?
+  end
+
+  def all_same?([]), do: true
+  def all_same?([_]), do: true
+  def all_same?([hd, hd | tl]), do: all_same?([hd | tl])
+  def all_same?(_), do: false
+
+  # def tree_weight([]), do: 0
+  def tree_weight({_name, weight, children}) do
+    children_weight =
+      children
+      |> Enum.map(&tree_weight/1)
+      |> Enum.sum
+
+    weight + children_weight
+  end
+
   def parse([]), do: []
   def parse([parent]), do: [parent]
   def parse(["->" | children]), do: children
